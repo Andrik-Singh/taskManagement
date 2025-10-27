@@ -1,5 +1,16 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
-
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  uuid,
+  index,
+  uniqueIndex,
+  pgEnum,
+  primaryKey,
+} from "drizzle-orm/pg-core";
+export const priorityEnum = pgEnum("priorityEnum", ["Low", "Medium", "High"]);
+export const roleEnum = pgEnum("roleEnum", ["user", "admin", "owner"]);
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -59,3 +70,109 @@ export const verification = pgTable("verification", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    taskTitle: text("taskTitle").notNull(),
+    taskDescription: text("taskDescription").notNull(),
+    createdAt: timestamp("createdAt").defaultNow(),
+    updatedAt: timestamp("updatedAt").$onUpdate(() => new Date()),
+    dueDate: timestamp("dueDate"),
+    repeatDaily: boolean("repeatDaily"),
+    completed: boolean("completed").default(false),
+    priority: priorityEnum("priority").notNull(),
+    assigneId: text("assigneeId")
+      .references(() => user.id)
+      .notNull(),
+    projectId: text("projectId").references(() => projects.projectId,{
+      onDelete:"cascade"
+    }),
+    extraResources: text("extraResources"),
+  },
+  (table) => ({
+    prioritIndex: index("prioritIndex").on(
+      table.assigneId,
+      table.completed,
+      table.priority
+    ),
+    assigneIdIndex: index("assigneIdIndex").on(table.assigneId),
+    orgIndex: index("orgIndex").on(table.projectId),
+  })
+);
+export const completedTask = pgTable(
+  "completedTask",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    taskTitle: text("taskTitle").notNull(),
+    taskDescription: text("taskDescription").notNull(),
+    completedAt: timestamp("completedAt").defaultNow(),
+    dueDate: timestamp("dueDate"),
+    assigneId: text("assigneId")
+      .references(() => user.id)
+      .notNull(),
+    priority: priorityEnum("priority").notNull(),
+  },
+  (table) => ({
+    CompletedassigneId: index("assigneId").on(table.assigneId),
+  })
+);
+export const organization = pgTable("organization", {
+  orgId: uuid("orgId").primaryKey().defaultRandom(),
+  owner: text("ownerId").references(() => user.id),
+  organizationName: text("organizationName").notNull(),
+  crearedAt: timestamp("createdAt").notNull(),
+});
+export const organizationMembers = pgTable(
+  "organizationMembers",
+  {
+    orgId: text("orgId")
+      .references(() => organization.orgId, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("userId")
+      .references(() => user.id, { onDelete: "cascade" })
+      .notNull(),
+    joinedAt: timestamp("joinedAt").defaultNow(),
+    role: text("role").notNull(),
+    memberDescription: text("memberDescription").notNull(),
+  },
+  (table) => ({
+    primaryKey: primaryKey({ columns: [table.orgId, table.userId] }),
+  })
+);
+export const projects = pgTable("projectTask", {
+  projectId: uuid().primaryKey().defaultRandom(),
+  projectame: text("projectName").notNull(),
+  projectDescription: text("projectDescription").notNull(),
+  startDate: timestamp("startDate").notNull(),
+  dueDate: timestamp("dueDate").notNull(),
+  projectResources: text("projectResources"),
+  orgId: text("orgId").references(() => organization.orgId, {
+    onDelete: "cascade",
+  }),
+  madeBy: text("madeBy")
+    .references(() => user.id)
+    .notNull(),
+},(table)=>({
+  projectOrgId:index("projectOrgId").on(table.orgId)
+}));
+export const completedProjects = pgTable("completedProjects", {
+  completedProjectId: uuid("completedProjectId").primaryKey().defaultRandom(),
+  completedProjectame: text("completedProjectame").notNull(),
+  completedProjectDescription: text("completedProjectDescription").notNull(),
+  projetCompletedAt: timestamp("projetCompletedAt").defaultNow(),
+  orgId: text("orgId").references(() => organization.orgId, {
+    onDelete: "cascade",
+  }),
+  madeBy: text("madeBy")
+    .references(() => user.id)
+    .notNull(),
+});
+export const inviteeTable=pgTable("inviteeTable",{
+  inviteeId:uuid("inviteeId").primaryKey().defaultRandom(),
+  token:text("token").unique(),
+  createdBy:text("createdBy").references(()=>user.id).notNull(),
+  orgId:text("orgId").references(()=>organization.orgId).notNull(),
+  createdAt:timestamp("createdAt").defaultNow().notNull(),
+  expiresAt:timestamp("expiresAt").notNull(),
+})
