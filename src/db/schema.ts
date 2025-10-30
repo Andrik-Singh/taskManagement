@@ -79,7 +79,7 @@ export const tasks = pgTable(
     createdAt: timestamp("createdAt").defaultNow(),
     updatedAt: timestamp("updatedAt").$onUpdate(() => new Date()),
     dueDate: timestamp("dueDate"),
-    repeatDaily: boolean("repeatDaily"),
+    repeatDaily: boolean("repeatDaily").default(false),
     completed: boolean("completed").default(false),
     priority: priorityEnum("priority").notNull(),
     assigneId: text("assigneeId")
@@ -119,9 +119,11 @@ export const completedTask = pgTable(
 );
 export const organization = pgTable("organization", {
   orgId: uuid("orgId").primaryKey().defaultRandom(),
-  owner: text("ownerId").references(() => user.id),
+  owner: text("ownerId").references(() => user.id,{
+    onDelete:"cascade"
+  }),
   organizationName: text("organizationName").notNull(),
-  crearedAt: timestamp("createdAt").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
 });
 export const organizationMembers = pgTable(
   "organizationMembers",
@@ -133,16 +135,16 @@ export const organizationMembers = pgTable(
       .references(() => user.id, { onDelete: "cascade" })
       .notNull(),
     joinedAt: timestamp("joinedAt").defaultNow(),
-    role: text("role").notNull(),
-    memberDescription: text("memberDescription").notNull(),
+    role: roleEnum("role").notNull(),
+    memberDescription: text("memberDescription"),
   },
   (table) => ({
     primaryKey: primaryKey({ columns: [table.orgId, table.userId] }),
   })
 );
 export const projects = pgTable("projectTask", {
-  projectId: uuid().primaryKey().defaultRandom(),
-  projectame: text("projectName").notNull(),
+  projectId: uuid("projectId").primaryKey().defaultRandom(),
+  projectname: text("projectName").notNull(),
   projectDescription: text("projectDescription").notNull(),
   startDate: timestamp("startDate").notNull(),
   dueDate: timestamp("dueDate").notNull(),
@@ -151,11 +153,22 @@ export const projects = pgTable("projectTask", {
     onDelete: "cascade",
   }),
   madeBy: text("madeBy")
-    .references(() => user.id)
+    .references(() => user.id,{
+      onDelete:"cascade"
+    })
     .notNull(),
 },(table)=>({
   projectOrgId:index("projectOrgId").on(table.orgId)
 }));
+export const projectMembers=pgTable("projectMembers",{
+  projectId:text("projectId").references(()=>projects.projectId,{
+    onDelete:"cascade"
+  }),
+  memberId:text("memberId").references(()=>user.id,{
+    onDelete:"cascade"
+  }),
+  memberDescription:text("memberDescription"),
+})
 export const completedProjects = pgTable("completedProjects", {
   completedProjectId: uuid("completedProjectId").primaryKey().defaultRandom(),
   completedProjectame: text("completedProjectame").notNull(),
@@ -165,14 +178,20 @@ export const completedProjects = pgTable("completedProjects", {
     onDelete: "cascade",
   }),
   madeBy: text("madeBy")
-    .references(() => user.id)
+    .references(() => user.id,{
+      onDelete:"cascade"
+    })
     .notNull(),
 });
 export const inviteeTable=pgTable("inviteeTable",{
   inviteeId:uuid("inviteeId").primaryKey().defaultRandom(),
   token:text("token").unique(),
-  createdBy:text("createdBy").references(()=>user.id).notNull(),
-  orgId:text("orgId").references(()=>organization.orgId).notNull(),
+  createdBy:text("createdBy").references(()=>user.id,{
+    onDelete:"cascade"
+  }).notNull(),
+  orgId:text("orgId").references(()=>organization.orgId,{
+    onDelete:"cascade"
+  }).notNull(),
   createdAt:timestamp("createdAt").defaultNow().notNull(),
   expiresAt:timestamp("expiresAt").notNull(),
 })
