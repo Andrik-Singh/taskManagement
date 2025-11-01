@@ -8,6 +8,7 @@ import {
   uniqueIndex,
   pgEnum,
   primaryKey,
+  integer,
 } from "drizzle-orm/pg-core";
 export const priorityEnum = pgEnum("priorityEnum", ["Low", "Medium", "High"]);
 export const roleEnum = pgEnum("roleEnum", ["user", "admin", "owner"]);
@@ -81,6 +82,8 @@ export const tasks = pgTable(
     dueDate: timestamp("dueDate"),
     repeatDaily: boolean("repeatDaily").default(false),
     completed: boolean("completed").default(false),
+    completedAt:timestamp("completedAt"),
+    completedNumberOfTimes:integer("completedNumberOfTimes").default(0).notNull(),
     priority: priorityEnum("priority").notNull(),
     assigneId: text("assigneeId")
       .references(() => user.id)
