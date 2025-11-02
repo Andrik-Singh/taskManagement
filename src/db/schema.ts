@@ -88,7 +88,7 @@ export const tasks = pgTable(
     assigneId: text("assigneeId")
       .references(() => user.id)
       .notNull(),
-    projectId: text("projectId").references(() => projects.projectId,{
+    projectId: uuid("projectId").references(() => projects.projectId,{
       onDelete:"cascade"
     }),
     extraResources: text("extraResources"),
@@ -131,7 +131,7 @@ export const organization = pgTable("organization", {
 export const organizationMembers = pgTable(
   "organizationMembers",
   {
-    orgId: text("orgId")
+    orgId: uuid("orgId")
       .references(() => organization.orgId, { onDelete: "cascade" })
       .notNull(),
     userId: text("userId")
@@ -152,7 +152,7 @@ export const projects = pgTable("projectTask", {
   startDate: timestamp("startDate").notNull(),
   dueDate: timestamp("dueDate").notNull(),
   projectResources: text("projectResources"),
-  orgId: text("orgId").references(() => organization.orgId, {
+  orgId: uuid("orgId").references(() => organization.orgId, {
     onDelete: "cascade",
   }),
   madeBy: text("madeBy")
@@ -164,7 +164,7 @@ export const projects = pgTable("projectTask", {
   projectOrgId:index("projectOrgId").on(table.orgId)
 }));
 export const projectMembers=pgTable("projectMembers",{
-  projectId:text("projectId").references(()=>projects.projectId,{
+  projectId:uuid("projectId").references(()=>projects.projectId,{
     onDelete:"cascade"
   }),
   memberId:text("memberId").references(()=>user.id,{
@@ -177,7 +177,7 @@ export const completedProjects = pgTable("completedProjects", {
   completedProjectame: text("completedProjectame").notNull(),
   completedProjectDescription: text("completedProjectDescription").notNull(),
   projetCompletedAt: timestamp("projetCompletedAt").defaultNow(),
-  orgId: text("orgId").references(() => organization.orgId, {
+  orgId: uuid("orgId").references(() => organization.orgId, {
     onDelete: "cascade",
   }),
   madeBy: text("madeBy")
@@ -192,7 +192,7 @@ export const inviteeTable=pgTable("inviteeTable",{
   createdBy:text("createdBy").references(()=>user.id,{
     onDelete:"cascade"
   }).notNull(),
-  orgId:text("orgId").references(()=>organization.orgId,{
+  orgId:uuid("orgId").references(()=>organization.orgId,{
     onDelete:"cascade"
   }).notNull(),
   createdAt:timestamp("createdAt").defaultNow().notNull(),
