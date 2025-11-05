@@ -5,7 +5,6 @@ import {
   boolean,
   uuid,
   index,
-  uniqueIndex,
   pgEnum,
   primaryKey,
   integer,
